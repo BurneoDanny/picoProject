@@ -1,9 +1,67 @@
 import pointingFinger from "../images/lungXray.jpg"
 import normal from "../images/normal.jpg"
 import neumo from "../images/neumo.jpg"
+import { useState, useEffect } from "react";
+import * as tf from '@tensorflow/tfjs';
+//import customIOHandler from "../IOHandler/IOHandler";
 
 export default function Content() {
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [model, setModel] = useState(null);
+    const [prediction, setPrediction] = useState(null);
 
+    const modelJSON = 'http://localhost:3002/models/model.json';
+    
+    useEffect(() => {
+        const loadModel = async () => {
+          console.log("Attempting to load model...");
+          try {
+            // Utiliza el customIOHandler para cargar el modelo
+            const model = await tf.loadLayersModel(modelJSON);
+            console.log("Model loaded:", model);
+            setModel(model);
+          } catch (e) {
+            console.log("[LOADING ERROR] info:", e);
+          }
+        };
+    
+        loadModel();
+      }, []);
+
+
+      
+
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file && model) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setSelectedImage(reader.result);
+                // Realizar la predicción localmente en el navegador
+                predictImage(file);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const predictImage = async (file) => {
+        const image = new Image();
+        image.src = URL.createObjectURL(file);
+        image.onload = async () => {
+            // Preprocesar la imagen: convertirla a escala de grises y escalarla
+            const tensor = tf.browser.fromPixels(image).toFloat();
+            const grayscale = tf.image.rgbToGrayscale(tensor);
+            const resized = tf.image.resizeNearestNeighbor(grayscale, [150, 150]).expandDims();
+    
+            // Realizar la predicción
+            const prediction = model.predict(resized);
+            const result = await prediction.data();
+    
+            // Actualizar el estado con el resultado de la predicción
+            setPrediction(result[0] > 0.5 ? 'No presenta Neumonía' : 'Presenta Neumonía');
+        };
+    };
+    
     return (
         <div>
             <section className="bg-[#0D1019] text-white h-auto flex flex-col gap-16 items-center justify-center pb-16">
@@ -84,17 +142,26 @@ export default function Content() {
             <section id="descripcion-general" className="min-h-auto flex flex-row items-center mt-20">
                 <div className="animate-fade-in-up flex-1 text-center flex flex-col justify-center items-center gap-2">
                     <h1 className="font-bold text-6xl">Sube tu imagen aquí!</h1>
-                    <h2 className="font-normal">
+                    <h2 className="font-normal mb-5">
                         Sube una radiografia del torax donde se pueda ver los dos pulmones.
                         <br />
                         El proceso puede tomar algo de tiempo, se paciente por favor.
                     </h2>
-                    <button className="mt-10 bg-yellow-500 rounded-md p-2 px-4 hover:bg-black hover:text-white hover:scale-110">Subir</button>
+                    <input className="custom-file-uploa border border-black rounded-md py-2 px-4 transition-all duration-300 hover:bg-black hover:text-white " type="file" accept="image/*" onChange={handleFileChange} />
                 </div>
                 <div className="flex-1 p-4">
                     <img className="rounded-md" src={pointingFinger} />
                 </div>
 
+            </section>
+            <section>
+                {selectedImage && (
+                    <div className="mt-4 flex flex-col justify-center items-center gap-4">
+                        <h1 className="font-bold text-6xl">Resultados</h1>
+                        <img className="rounded-md h-96 w-96" src={selectedImage} alt="Uploaded X-ray" />
+                        <h1 className="font-bold text-xl">{prediction}</h1>
+                    </div>
+                )}
             </section>
         </div>
     );
