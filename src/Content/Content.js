@@ -3,16 +3,16 @@ import normal from "../images/normal.jpg"
 import neumo from "../images/neumo.jpg"
 import { useState, useEffect } from "react";
 import * as tf from '@tensorflow/tfjs';
-//import customIOHandler from "../IOHandler/IOHandler";
 
 export default function Content() {
     const [selectedImage, setSelectedImage] = useState(null);
     const [model, setModel] = useState(null);
     const [prediction, setPrediction] = useState(null);
 
-    const modelJSON = 'http://localhost:3002/models/model.json';
+    const modelJSON = `${process.env.REACT_APP_MODEL_JSON_URL}/models/model.json`;
     
     useEffect(() => {
+
         const loadModel = async () => {
           console.log("Attempting to load model...");
           try {
