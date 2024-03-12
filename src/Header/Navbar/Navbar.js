@@ -43,7 +43,7 @@ export default function Navbar() {
                         <div className="hidden sm:ml-6 sm:block">
                             <div className="flex space-x-4">
                                 <a className="text-black rounded bg-white hover:bg-black hover:text-white
-                   px-3 py-2 text-sm font-medium">Sistema de reconocimiento de neumonia</a>
+                   px-3 py-2 text-sm font-medium">Proyecto realizado por Angel Pico</a>
 
                             </div>
                         </div>
